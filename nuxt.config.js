@@ -52,7 +52,7 @@ export default {
 
   proxy: {
     //'/api/': 'http://localhost/eng/api'
-    '/api': { target: 'http://users/api.php/records', pathRewrite: {'^/api': ''} }
+    '/api': { target: 'http://127.0.0.1:8000/api', pathRewrite: {'^/api': ''} }
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
