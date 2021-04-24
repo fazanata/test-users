@@ -21,5 +21,7 @@
     "vue-ctk-date-time-picker": "^2.5.0",
     "vue-full-calendar": "^2.8.1-0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@nuxtjs/vuetify": "^1.11.3"
+  }
 }

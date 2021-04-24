@@ -26,8 +26,19 @@
       label="Конец периода"
       hint="Введите конец периода, дату и время"
       locale="ru"
-      @change="changeDate"
     ></VueCtkDateTimePicker>
+    
+    <button
+       @click="filter"
+    >
+      Выбрать данные
+    </button>
+    <button
+       @click="clearFilter"
+    >
+      Очистить фильтр
+    </button>
+
     <table>
       <thead>
         <tr>
@@ -49,27 +60,37 @@
               onclick="this.checked=!this.checked;"
             />
           </td>
-          <td>{{ user.active_time }}</td>
+          <td>{{ user.active_time.substring(0, 16) }}</td>
         </tr>
       </tbody>
     </table>
 
-    <button
-      v-for="pageN in pageCount"
-      @click="pageNumber = pageN - 1"
-      :class="{ current: pageNumber + 1 === pageN }"
-    >
-      {{ pageN }}
-    </button>
+    <v-data-table
+    :headers="headers"
+    :items="users"
+    :sort-by="['id', 'fio']"
+    :sort-desc="[false, true]"
+    multi-sort
+    class="elevation-1"
+  ></v-data-table>
+
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import { VDataTable } from "vuetify/es5/components/VDataTable";
 
 export default {
   data() {
     return {
+      headers: [
+          { text: 'id', value: 'id' },
+          { text: 'ФИО', align: 'start', value: 'fio' },
+          { text: 'Активность', value: 'active' },
+          { text: 'Время активности', align: 'start', value: 'active_time' },
+        ],
+
       users: [],
       size: 5,
       length: 0,
@@ -77,7 +98,7 @@ export default {
       filterUsers: [],
 
       fio: "",
-      active: false,
+      active: null,
       active_time_start: "",
       active_time_end: "",
     };
@@ -86,9 +107,11 @@ export default {
     this.fetchData();
     console.log(this.pageCount);
   },
+  components: {
+    VDataTable
+  },
   methods: {
     fetchData() {
-      //get(`/api/testusers?order=id&page=${this.pageNumber+1},${this.size}`)
       axios
         .get(`/api/testuser/`)
         .then((res) => {
@@ -101,30 +124,27 @@ export default {
           console.log(err);
         });
     },
-    nextPage() {
-      this.pageNumber++;
-    },
-    prevPage() {
-      this.pageNumber--;
-    },
-    changeDate() {
-      console.log("1111");
+    clearFilter() {
+      this.fio='';
+      this.active=null;
+      this.active_time_start='';
+      this.active_time_end='';
+      this.filter();
     },
     filter() {
-      let fd = new FormData();
-      fd.append('fio', this.fio);
-      fd.append('active', this.active);
-      fd.append('active_time_start', this.active_time_start);
-      fd.append('active_time_end', this.active_time_end);
-      //console.log(fd);
+      
+      
+      let formData = new FormData();
+      if (this.fio !== '') formData.append('fio', this.fio);
+      if (this.active !== null) formData.append('active', this.active);
+      if (this.active_time_start !== '') formData.append('active_time_start', this.active_time_start.substring(0, 16));
+      if (this.active_time_end !== '') formData.append('active_time_end', this.active_time_end.substring(0, 16));
+      console.log('formData', formData);
       axios
-        .post(`/api/testuser/search`, {
-          'fio': this.fio,
-          'active': this.active
-        })
+        .post(`/api/testuser/search`, formData)
         .then((res) => {
           if (res.status == 200) {
-            this.filterUsers = res.data;
+            this.users = res.data;
             console.log(res.data);
           }
         })
