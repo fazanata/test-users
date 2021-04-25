@@ -2,7 +2,7 @@
   <div class="main">
     <h3>Список пользователей</h3>
     <label for="fio">ФИО</label>
-    <input type="text" v-model="fio" id="fio" @input="filter" />
+    <v-text-field type="text" v-model="fio" id="fio" @input="filter" ></v-text-field>
     <label for="active">Активен</label
     ><input
       type="checkbox"
@@ -28,42 +28,23 @@
       locale="ru"
     ></VueCtkDateTimePicker>
     
-    <button
+    <v-btn
+      class="ma-2"
+      outlined
+      color="indigo"
        @click="filter"
     >
       Выбрать данные
-    </button>
-    <button
+    </v-btn>
+    <v-btn
+      class="ma-2"
+      outlined
+      color="indigo"
        @click="clearFilter"
     >
       Очистить фильтр
-    </button>
+    </v-btn>
 
-    <table>
-      <thead>
-        <tr>
-          <th>id</th>
-          <th>ФИО</th>
-          <th>Активность</th>
-          <th>Последний вход</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="user in users" :key="user.id">
-          <td>{{ user.id }}</td>
-          <td>{{ user.fio }}</td>
-          <td align="center">
-            <input
-              type="checkbox"
-              v-model="user.active"
-              v-bind:id="user.id"
-              onclick="this.checked=!this.checked;"
-            />
-          </td>
-          <td>{{ user.active_time.substring(0, 16) }}</td>
-        </tr>
-      </tbody>
-    </table>
 
     <v-data-table
     :headers="headers"
@@ -72,6 +53,11 @@
     :sort-desc="[false, true]"
     multi-sort
     class="elevation-1"
+    :footer-props="{
+      'items-per-page-options': [5,10, 20, 30, 40, 50],
+        showFirstLastPage: true,
+           'items-per-page-text':'Записей на странице'
+      }"
   ></v-data-table>
 
   </div>
@@ -79,9 +65,13 @@
 
 <script>
 import axios from "axios";
-import { VDataTable } from "vuetify/es5/components/VDataTable";
+import { VBtn } from 'vuetify/lib'
+import { VInput } from 'vuetify/lib'
 
 export default {
+  extends: {
+    VBtn, VInput,
+  },
   data() {
     return {
       headers: [
@@ -92,9 +82,6 @@ export default {
         ],
 
       users: [],
-      size: 5,
-      length: 0,
-      pageNumber: 0,
       filterUsers: [],
 
       fio: "",
@@ -105,10 +92,6 @@ export default {
   },
   mounted() {
     this.fetchData();
-    console.log(this.pageCount);
-  },
-  components: {
-    VDataTable
   },
   methods: {
     fetchData() {
@@ -116,8 +99,11 @@ export default {
         .get(`/api/testuser/`)
         .then((res) => {
           if (res.status == 200) {
-            this.users = res.data;
-            //this.length = res.data.results;
+            this.users = res.data.map(s=> (
+              { id: s.id,
+                fio: s.fio,
+                active: s.active,
+                active_time: s.active_time.substring(0,16)}));
           }
         })
         .catch((err) => {
@@ -139,28 +125,17 @@ export default {
       if (this.active !== null) formData.append('active', this.active);
       if (this.active_time_start !== '') formData.append('active_time_start', this.active_time_start.substring(0, 16));
       if (this.active_time_end !== '') formData.append('active_time_end', this.active_time_end.substring(0, 16));
-      console.log('formData', formData);
+      
       axios
         .post(`/api/testuser/search`, formData)
         .then((res) => {
           if (res.status == 200) {
             this.users = res.data;
-            console.log(res.data);
           }
         })
         .catch((err) => {
           console.log(err);
         });
-    },
-  },
-  watch: {
-    pageNumber() {
-      this.fetchData();
-    },
-  },
-  computed: {
-    pageCount() {
-      return Math.ceil(this.length / this.size);
     },
   },
 };
